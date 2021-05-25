@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o 
 # start from scratch
 FROM debian
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-# COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/passwd /etc/passwd
 # Copy our static executable
 COPY --from=builder /go/bin/alertmanager-discord /go/bin/alertmanager-discord
 
