@@ -102,7 +102,7 @@ func sendWebhook(amo *alertManOut) {
 
 		RichEmbed := discordEmbed{
 			Title:       fmt.Sprintf("[%s:%d] %s", strings.ToUpper(status), len(alerts), amo.CommonLabels.Alertname),
-			Description: amo.CommonAnnotations.Summary,
+			Description: amo.CommonLabels.Alertname,
 			Color:       ColorGrey,
 			Fields:      []discordEmbedField{},
 		}
@@ -115,6 +115,8 @@ func sendWebhook(amo *alertManOut) {
 
 		if amo.CommonAnnotations.Summary != "" {
 			DO.Content = fmt.Sprintf(" === %s === \n", amo.CommonAnnotations.Summary)
+		} else {
+			DO.Content = amo.CommonLabels.Alertname
 		}
 
 		for _, alert := range alerts {
@@ -130,9 +132,23 @@ func sendWebhook(amo *alertManOut) {
 		}
 
 		DO.Embeds = []discordEmbed{RichEmbed}
+		fmt.Printf("Discord Out: %+v\n", DO)
 
 		DOD, _ := json.Marshal(DO)
-		http.Post(*whURL, "application/json", bytes.NewReader(DOD))
+		res, err := http.Post(*whURL, "application/json", bytes.NewReader(DOD))
+		// check for response error
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// read all response body
+		data, _ := ioutil.ReadAll(res.Body)
+
+		// close response body
+		res.Body.Close()
+
+		// print `data` as a string
+		fmt.Printf("%s\n", data)
 	}
 }
 
@@ -176,6 +192,7 @@ func main() {
 		log.Printf("%s - [%s] %s", r.Host, r.Method, r.URL.RawPath)
 
 		b, err := ioutil.ReadAll(r.Body)
+		fmt.Printf("AlertManager: %s\n", b)
 		if err != nil {
 			panic(err)
 		}
